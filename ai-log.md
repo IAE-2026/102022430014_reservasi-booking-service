@@ -34,3 +34,7 @@ Buatkan skema, model, resolver, dan endpoint GraphQL untuk mengambil data detail
 
 [15/5/2026 - 15.32]
 Buat konfigurasi dockerfile multi-stage menggunakan golang 1.22-alpine dan alpine latest, serta docker-compose.yml untuk menghubungkan aplikasi dengan PostgreSQL 15 dan Redis 7 dalam satu network internal.
+
+[11/6/2026 - 17.17]
+Tambahkan variabel environment baru di .env dan perbarui file konfigurasi di internal/infrastructure/. Tambahkan URL untuk SSO_URL=https://iae-sso.virtualfri.id dan API_KEY=KEY-MHS-25. Kemudian, buat sebuah helper atau service M2M di layer infrastructure untuk melakukan HTTP POST ke /api/v1/auth/token menggunakan payload JSON {"api_key": "KEY-MHS-25"}. Fungsi ini harus mengembalikan Bearer JWT, dan cache token tersebut di Redis dengan TTL menyesuaikan expired token agar sistem tidak terus-menerus memanggil API dari server cloud.
+
