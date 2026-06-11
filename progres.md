@@ -147,3 +147,33 @@ Aplikasi berhasil melalui proses kompilasi tanpa celah (`Exit code: 0`). Infrast
 Perbarui model entitas Booking di GORM dengan menambahkan kolom receipt_number (tipe string/varchar, nullable). Selanjutnya, orkestrasikan semuanya di file Usecase CreateBooking. Urutan logikanya: 1) Cek Hold Room di Redis, 2) INSERT data pesanan ke PostgreSQL, 3) Panggil soap_client untuk audit dan dapatkan nomor resi, 4) UPDATE receipt_number di database, 5) Panggil rabbitmq_client untuk broadcast event.
 
 # Goal Description 5
+# Walkthrough: Orkestrasi Endpoint CreateBooking
+
+Modifikasi tahap akhir (Fase 2 & Fase 3) pada inti layanan (*Usecase Layer*) untuk merangkai semua komponen integrasi yang telah kita buat kini telah selesai diimplementasikan!
+
+Berikut rincian dari orkestrasi yang saya bangun:
+
+---
+
+## 1. Persiapan Model GORM (`domain/booking.go`)
+Sebelum data dapat disimpan, saya telah menambahkan atribut opsional `ReceiptNumber *string` pada *struct* `Booking` yang terikat pada *database*. Penggunaan pointer di sini dioptimalkan untuk memfasilitasi status `NULL` pada PostgreSQL jika layanan eksternal bermasalah.
+
+## 2. Alur Orkestrasi Logika (`usecase/create_booking.go`)
+Fungsi `CreateBooking` kini bertindak sebagai pengatur utama alur transaksi:
+
+- **Validasi Terpadu & Hitung Harga**: Mengambil kunci asinkron dari Redis (*Hold Room*), memastikan penggunanya sah, lalu menghitung harga total (*Total Price*).
+- **Persistensi Transaksi (DB)**: Fungsi memanggil `CreateBooking` di repositori untuk secara resmi meregistrasi reservasi di dalam PostgreSQL.
+- **Audit Logging via SOAP**: *Payload* transaksi diubah ke format JSON lalu dikirimkan ke `SendAuditLog`.
+- **Injeksi Resi (Receipt Number)**: Jika respons SOAP sukses membuahkan hasil, *Receipt Number* tersebut *(misal: `IAE-LOG...`)* dimasukkan ke `booking.ReceiptNumber` untuk kemudian diperbarui statusnya di PostgreSQL.
+- **Event Broadcasting via RabbitMQ**: Fungsi membungkus *ID* dan status baru (LOCKED) beserta cap waktu (*timestamp*) ke dalam kerangka *struct* khusus. Kerangka ini lantas ditembak ke *Message Broker* dosen via fungsi `PublishBookingEvent`.
+
+> [!TIP]
+> **Resiliensi Transaksi (Non-Blocking)**
+> Jika pemanggilan HTTP (ke peladen SOAP atau RabbitMQ) gagal, *usecase* didesain cerdas untuk **tetap melanjutkan transaksi lokal**. Sistem akan menyiarkan kegagalannya melalui peringatan *log/warning*, namun *Booking ID* tetap berhasil diterbitkan kepada pengguna (*Guest*). Ini adalah praktik terbaik sistem *microservices* modern agar tidak terjadi hambatan *(bottleneck)* yang menghalangi klien menyelesaikan pemesanan.
+
+### Hasil Eksekusi
+Seluruh kode di orkestrasi ini telah digabungkan dan lolos tahap pengujian kompilasi (*go build exit code: 0*), menandakan seluruh lapis struktur antar *packages* dan rute eksternal sudah serasi dan selaras.
+
+
+# Prompt 6
+Terapkan resiliensi (Retry Queue/Outbox Pattern) pada Usecase CreateBooking. Jika panggilan ke soap_client atau rabbitmq_client mengalami timeout atau gagal (HTTP 500 dari server cloud), jangan gagalkan transaksi / jangan kembalikan error ke klien. Tangkap error tersebut, lalu gunakan Redis List (LPUSH retry:soap atau LPUSH retry:rabbitmq) untuk menyimpan payload yang gagal. Tetap kembalikan respons HTTP 201 Created ke pengguna dengan wrapper standar. Sisipkan goroutine sederhana yang berjalan di background untuk membaca antrean Redis tersebut dan mencoba mengirim ulang secara berkala.

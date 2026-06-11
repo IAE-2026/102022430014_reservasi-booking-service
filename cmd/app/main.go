@@ -24,6 +24,7 @@ import (
 	"reservasi/internal/infrastructure"
 	"reservasi/internal/repository"
 	"reservasi/internal/usecase"
+	"reservasi/internal/worker"
 	"reservasi/pkg/middleware"
 
 	_ "reservasi/docs"
@@ -121,6 +122,9 @@ func main() {
 
 	// 5. Start message broker listener untuk event pembayaran timeout
 	broker.StartBrokerListener(bookingUsecase)
+
+	// 5b. Start background worker untuk Outbox Pattern (Retry Queue)
+	worker.StartRetryWorker(bookingRepo)
 
 	// 6. Inisialisasi Router Gin
 	r := gin.Default()

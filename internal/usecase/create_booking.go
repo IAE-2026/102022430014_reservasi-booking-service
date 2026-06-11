@@ -109,6 +109,9 @@ func (u *bookingUsecase) CreateBooking(req *domain.CreateBookingRequest) (*domai
 	receiptStr, err := infrastructure.SendAuditLog(ctx, string(payloadBytes))
 	if err != nil {
 		log.Printf("Warning: Gagal mengirim audit log SOAP: %v", err)
+		if infrastructure.RedisClient != nil {
+			infrastructure.RedisClient.LPush(ctx, "retry:soap", string(payloadBytes))
+		}
 	} else if receiptStr != "" {
 		// 9. Update Receipt Number
 		booking.ReceiptNumber = &receiptStr
@@ -125,6 +128,10 @@ func (u *bookingUsecase) CreateBooking(req *domain.CreateBookingRequest) (*domai
 	}
 	if err := infrastructure.PublishBookingEvent(ctx, event); err != nil {
 		log.Printf("Warning: Gagal publish event RabbitMQ: %v", err)
+		if infrastructure.RedisClient != nil {
+			eventBytes, _ := json.Marshal(event)
+			infrastructure.RedisClient.LPush(ctx, "retry:rabbitmq", string(eventBytes))
+		}
 	}
 
 	// Lepas sementara hold Redis agar tidak mengunci resource berlebih
