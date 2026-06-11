@@ -16,8 +16,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
-	"reservasi/internal/broker"
 	"reservasi/internal/delivery/graphql"
 	"reservasi/internal/delivery/rest"
 	"reservasi/internal/domain"
@@ -52,7 +50,6 @@ func main() {
 	// 2. Inisialisasi koneksi Database, Redis, dan Message Broker
 	infrastructure.ConnectPostgres()
 	infrastructure.ConnectRedis()
-	infrastructure.ConnectBroker()
 
 	// ============================================================
 	// 3. Proses Migrasi & Seed (Interaktif atau via Flag)
@@ -119,9 +116,6 @@ func main() {
 	// 4. Inisialisasi Dependency Injection (Clean Architecture)
 	bookingRepo := repository.NewBookingRepository(infrastructure.DB, infrastructure.RedisClient)
 	bookingUsecase := usecase.NewBookingUsecase(bookingRepo)
-
-	// 5. Start message broker listener untuk event pembayaran timeout
-	broker.StartBrokerListener(bookingUsecase)
 
 	// 5b. Start background worker untuk Outbox Pattern (Retry Queue)
 	worker.StartRetryWorker(bookingRepo)

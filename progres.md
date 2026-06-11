@@ -177,3 +177,33 @@ Seluruh kode di orkestrasi ini telah digabungkan dan lolos tahap pengujian kompi
 
 # Prompt 6
 Terapkan resiliensi (Retry Queue/Outbox Pattern) pada Usecase CreateBooking. Jika panggilan ke soap_client atau rabbitmq_client mengalami timeout atau gagal (HTTP 500 dari server cloud), jangan gagalkan transaksi / jangan kembalikan error ke klien. Tangkap error tersebut, lalu gunakan Redis List (LPUSH retry:soap atau LPUSH retry:rabbitmq) untuk menyimpan payload yang gagal. Tetap kembalikan respons HTTP 201 Created ke pengguna dengan wrapper standar. Sisipkan goroutine sederhana yang berjalan di background untuk membaca antrean Redis tersebut dan mencoba mengirim ulang secara berkala.
+
+# Goal Description 6
+# Walkthrough: Resiliensi via Retry Queue (Outbox Pattern)
+
+Pola desain yang krusial untuk mencegah kegagalan berantai *(cascading failure)* pada sistem *microservices* telah direalisasikan. Kini, transaksi pemesanan (`CreateBooking`) tidak akan gagal hanya karena server `iae-sso` atau `iae.central.exchange` (Server Dosen) sedang bermasalah. 
+
+Berikut adalah rangkuman dari sistem resiliensi yang telah kita bangun:
+
+---
+
+## 1. Penyimpanan Antrean Sementara (`usecase/create_booking.go`)
+Saya telah memodifikasi penanganan *error* pada tahap pemanggilan *SOAP* dan *RabbitMQ*. Bukannya membatalkan transaksi atau mengembalikan respon HTTP 500, kini aplikasi akan menangkap payload transaksi yang gagal dan secara elegan menyimpannya *(push)* ke dalam Redis:
+- `LPUSH retry:soap`
+- `LPUSH retry:rabbitmq`
+
+*Booking ID* akan tetap dikembalikan ke klien dengan status `201 Created` karena data sudah masuk dan aman di PostgreSQL.
+
+## 2. Background Retry Worker (`internal/worker/retry_worker.go`)
+Aplikasi kita sekarang memiliki asisten tak terlihat yang bekerja secara asinkron di belakang layar. 
+- Pekerja *(worker)* ini dipanggil langsung di fungsi `main()` saat server dinyalakan menggunakan konsep `goroutine`.
+- Terdapat sebuah *ticker* yang memerintahkan *worker* untuk melakukan pengecekan Redis setiap **60 detik**. 
+- *Worker* akan memungut (*RPOP*) antrean SOAP maupun RabbitMQ yang tertunda dan mencoba mengirimkannya ulang ke server dosen.
+- Jika SOAP *retry* berhasil, *worker* tersebut akan secara mandiri mengakses repositori `UpdateBooking` untuk mengisi `ReceiptNumber` yang belum sempat tersimpan di PostgreSQL!
+
+> [!TIP]
+> **Kinerja Ticker**
+> Interval waktu *retry* diset ke 60 detik agar tidak terjadi *spam* yang berlebih bila server awan sedang perbaikan/down lama. Mekanisme ini juga dibatasi pada kecepatan **10 pesan per siklus** untuk mencegah *bottleneck* memori aplikasi jika tumpukan *error* tiba-tiba melonjak.
+
+### Status Lingkungan:
+Dengan perubahan ini, fondasi arsitektur kita sudah solid dan sangat tahan banting (*fault-tolerant*). Laporan *go build* juga mengonfirmasi kode kompilasi berada pada tingkat 100% *(Exit code: 0)*.

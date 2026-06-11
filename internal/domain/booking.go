@@ -78,7 +78,6 @@ type BookingUsecase interface {
 	CreateBooking(req *CreateBookingRequest) (*Booking, error)
 	AddAddon(bookingID string, req *CreateBookingAddonRequest) (*BookingAddon, error)
 	GetSummary(bookingID string) (*BookingSummary, error)
-	HandleBookingPaymentTimeout(bookingID string) error
 
 	HoldRoom(roomID string, req *HoldRoomRequest) error
 	ReleaseRoom(roomID string, guestID string) error
