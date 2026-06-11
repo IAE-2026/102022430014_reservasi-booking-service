@@ -109,3 +109,41 @@ Respons dari peladen pusat dalam format XML diterima dan dilakukan proses *Unmar
 
 # Prompt 4
 Buat file rabbitmq_client.go di internal/infrastructure/. Buat fungsi untuk melakukan HTTP POST ke /api/v1/messages/publish. Gunakan M2M Token di header. Fungsi ini menerima struct event (misal: booking_id, status: LOCKED, timestamp), merubahnya menjadi JSON, dan menembaknya ke API gateway server cloud tersebut untuk mempublikasikan event ke iae.central.exchange secara asynchronous.
+
+# Goal Description 4
+# Walkthrough: Integrasi Message Broker (RabbitMQ)
+
+Fase persiapan infrastruktur eksternal *(Fase 3)* berdasarkan arsitektur yang direncanakan telah selesai. Kini, integrasi publikasi antrean asinkron (*Event Publishing*) ke `iae.central.exchange` telah direalisasikan.
+
+Berikut adalah rincian komponen yang dibuat:
+
+---
+
+## 1. Skema Booking Event (`rabbitmq_client.go`)
+Saya telah membuat klien baru dan mendefinisikan *struct* `BookingEvent` yang akan memformat data transaksi internal Anda menjadi skema pesan standar:
+```go
+type BookingEvent struct {
+	BookingID string    `json:"booking_id"`
+	Status    string    `json:"status"`
+	Timestamp time.Time `json:"timestamp"`
+}
+```
+*Struct* ini nantinya akan diubah menjadi byte JSON ketika dikirimkan ke server awan.
+
+## 2. Publikasi Asinkron via HTTP Gateway
+Fungsi `PublishBookingEvent` bertanggung jawab untuk membangun jembatan pengiriman data antara aplikasi Reservasi dengan infrastruktur RabbitMQ milik dosen. 
+- **Injeksi Autentikasi**: Sama halnya dengan klien SOAP, M2M Token yang diproduksi oleh `GetM2MToken(ctx)` dipasang secara otomatis ke *header* `Authorization` agar permintaan disetujui.
+- **Validasi Respons**: HTTP POST diarahkan ke `${SSO_URL}/api/v1/messages/publish`. Segera setelah API dosen mengembalikan respon sukses (`HTTP 200/201/202`), klien ini akan memberikan konfirmasi (berupa balasan tanpa *error*), sehingga transaksi pemesanan dapat ditandai selesai.
+
+> [!TIP]
+> **Selanjutnya**
+> Setelah fungsi SOAP (`SendAuditLog`) dan fungsi RabbitMQ (`PublishBookingEvent`) rampung, kita tinggal menghubungkannya ke dalam **Usecase Layer** (`internal/usecase/booking.go`). Kita akan merangkai seluruh fungsi ini untuk dieksekusi secara otomatis setiap kali status transaksi *booking* di-set menjadi `LOCKED`.
+
+### Status Lingkungan:
+Aplikasi berhasil melalui proses kompilasi tanpa celah (`Exit code: 0`). Infrastruktur pendukung kini sudah 100% matang untuk dieksekusi secara serentak.
+
+
+# Prompt 5
+Perbarui model entitas Booking di GORM dengan menambahkan kolom receipt_number (tipe string/varchar, nullable). Selanjutnya, orkestrasikan semuanya di file Usecase CreateBooking. Urutan logikanya: 1) Cek Hold Room di Redis, 2) INSERT data pesanan ke PostgreSQL, 3) Panggil soap_client untuk audit dan dapatkan nomor resi, 4) UPDATE receipt_number di database, 5) Panggil rabbitmq_client untuk broadcast event.
+
+# Goal Description 5

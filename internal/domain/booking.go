@@ -19,6 +19,7 @@ type Booking struct {
 	Status           string         `gorm:"type:varchar(50);default:'LOCKED'" json:"status"`
 	CreatedAt        time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	ExpiresAt        *time.Time     `json:"expires_at"`
+	ReceiptNumber    *string        `gorm:"type:varchar(100)" json:"receipt_number"`
 	Addons           []BookingAddon `gorm:"foreignKey:BookingID" json:"addons,omitempty"`
 }
 

@@ -2,10 +2,14 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"log"
 	"math"
-	"reservasi/internal/domain"
 	"time"
+
+	"reservasi/internal/domain"
+	"reservasi/internal/infrastructure"
 
 	"github.com/google/uuid"
 )
@@ -98,6 +102,29 @@ func (u *bookingUsecase) CreateBooking(req *domain.CreateBookingRequest) (*domai
 	if err := u.bookingRepo.CreateBooking(booking); err != nil {
 		_ = u.bookingRepo.UpdateRoomStatus(req.RoomID, "AVAILABLE")
 		return nil, errors.New("gagal membuat pesanan: " + err.Error())
+	}
+
+	// 8. SOAP Audit Logging
+	payloadBytes, _ := json.Marshal(booking)
+	receiptStr, err := infrastructure.SendAuditLog(ctx, string(payloadBytes))
+	if err != nil {
+		log.Printf("Warning: Gagal mengirim audit log SOAP: %v", err)
+	} else if receiptStr != "" {
+		// 9. Update Receipt Number
+		booking.ReceiptNumber = &receiptStr
+		if err := u.bookingRepo.UpdateBooking(booking); err != nil {
+			log.Printf("Warning: Gagal update receipt number di database: %v", err)
+		}
+	}
+
+	// 10. Message Broker Broadcast
+	event := infrastructure.BookingEvent{
+		BookingID: booking.ID.String(),
+		Status:    booking.Status,
+		Timestamp: time.Now(),
+	}
+	if err := infrastructure.PublishBookingEvent(ctx, event); err != nil {
+		log.Printf("Warning: Gagal publish event RabbitMQ: %v", err)
 	}
 
 	// Lepas sementara hold Redis agar tidak mengunci resource berlebih
