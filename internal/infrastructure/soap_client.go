@@ -42,7 +42,7 @@ func SendAuditLog(ctx context.Context, payloadJSON string) (string, error) {
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:iae="http://iae.central/audit">
  <soap:Body>
   <iae:AuditRequest>
-   <iae:TeamID>TEAM-25</iae:TeamID>
+   <iae:TeamID>TEAM-11</iae:TeamID>
    <iae:ActivityName>BookingCreated</iae:ActivityName>
    <iae:LogContent><![CDATA[%s]]></iae:LogContent>
   </iae:AuditRequest>

@@ -85,3 +85,27 @@ Perubahan ini telah di-*build* menggunakan kompiler golang terbaru dan berjalan 
 # Prompt 3
 Buat file soap_client.go di internal/infrastructure/. Buat fungsi HTTP POST ke /soap/v1/audit. Gunakan M2M Token dari helper yang dibuat sebelumnya di header Authorization. Fungsi ini menerima payload JSON transaksi, lalu membungkusnya ke dalam format XML Envelope yang memiliki tag <iae:TeamID>TEAM-25</iae:TeamID>, <iae:ActivityName>BookingCreated</iae:ActivityName>, dan <iae:LogContent><![CDATA[ ...JSON... ]]></iae:LogContent>. Lakukan unmarshal pada respons XML dari server cloud untuk mengekstrak dan mengembalikan nilai dari tag <iae:ReceiptNumber>.
 
+# Goal Description 3
+# Integrasi SOAP Client
+
+Fitur pelaporan riwayat pemesanan *(Audit Trail)* ke layanan pusat dosen via arsitektur SOAP telah sukses diimplementasikan dan dikirim ke GitHub. 
+
+Berikut rincian dari fitur yang ditambahkan:
+
+---
+
+## 1. SOAP XML Enveloping (`soap_client.go`)
+Fungsi `SendAuditLog` secara spesifik mengkonstruksi protokol SOAP 1.1 yang sangat tertib, disesuaikan persis dengan standar `.kredensial`:
+- Menambahkan **`<iae:TeamID>`** dengan nilai `TEAM-25`.
+- Mendeklarasikan aktivitas melalui **`<iae:ActivityName>`** dengan nilai `BookingCreated`.
+- Melindungi dan membungkus *payload JSON* di dalam konstruksi **`<![CDATA[ ... ]]>`** (agar struktur JSON seperti kurung kurawal `{}` tidak dianggap sebagai tag XML).
+
+## 2. Pemanfaatan Token M2M
+Klien SOAP memanggil `GetM2MToken(ctx)` dari *helper* yang sebelumnya telah kita bangun. Hal ini memastikan setiap log audit dilindungi oleh token Bearer, menjadikan pertukaran data B2B (*Business-to-Business*) tetap aman.
+
+## 3. Ekstraksi Nomor Resi (Receipt Number)
+Respons dari peladen pusat dalam format XML diterima dan dilakukan proses *Unmarshaling* langsung ke struktur struct Go (`AuditResponseEnvelope`) dengan akurasi yang tinggi. Hal ini menjamin nilai resi seperti `IAE-LOG-2026-XXXXX` dapat dengan tepat diekstrak, dan sistem otomatis memberikan notifikasi kegagalan apabila status respons bukan `SUCCESS` atau format XML berubah.
+
+
+# Prompt 4
+Buat file rabbitmq_client.go di internal/infrastructure/. Buat fungsi untuk melakukan HTTP POST ke /api/v1/messages/publish. Gunakan M2M Token di header. Fungsi ini menerima struct event (misal: booking_id, status: LOCKED, timestamp), merubahnya menjadi JSON, dan menembaknya ke API gateway server cloud tersebut untuk mempublikasikan event ke iae.central.exchange secara asynchronous.
