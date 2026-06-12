@@ -19,6 +19,7 @@ type Booking struct {
 	Status           string         `gorm:"type:varchar(50);default:'LOCKED'" json:"status"`
 	CreatedAt        time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	ExpiresAt        *time.Time     `json:"expires_at"`
+	ReceiptNumber    *string        `gorm:"type:varchar(100)" json:"receipt_number"`
 	Addons           []BookingAddon `gorm:"foreignKey:BookingID" json:"addons,omitempty"`
 }
 
@@ -32,10 +33,11 @@ type BookingAddon struct {
 
 // Data Request
 type CreateBookingRequest struct {
-	GuestID      string `json:"guest_id" binding:"required,uuid"`
-	RoomID       string `json:"room_id" binding:"required,uuid"`
-	CheckInDate  string `json:"check_in_date" binding:"required"`  // format YYYY-MM-DD
-	CheckOutDate string `json:"check_out_date" binding:"required"` // format YYYY-MM-DD
+	GuestID        string `json:"guest_id" binding:"required,uuid"`
+	RoomID         string `json:"room_id" binding:"required,uuid"`
+	CheckInDate    string `json:"check_in_date" binding:"required"`  // format YYYY-MM-DD
+	CheckOutDate   string `json:"check_out_date" binding:"required"` // format YYYY-MM-DD
+	IdempotencyKey string `json:"-"`                                 // Diisi dari header, bukan JSON body
 }
 
 type CreateBookingAddonRequest struct {
@@ -60,6 +62,8 @@ type BookingRepository interface {
 	CreateBookingAddon(addon *BookingAddon) error
 	GetBookingByID(id string) (*Booking, error)
 	UpdateBooking(booking *Booking) error
+	UpdateBookingStatus(bookingID string, status string) error
+	UpdateRoomStatus(roomID string, status string) error
 	GetRoomByID(id string) (*Room, error)
 	GetAddonByID(id string) (*Addon, error)
 	GetGuestByID(id string) (*Guest, error)

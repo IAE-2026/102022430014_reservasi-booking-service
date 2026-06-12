@@ -16,13 +16,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
 	"reservasi/internal/delivery/graphql"
 	"reservasi/internal/delivery/rest"
 	"reservasi/internal/domain"
 	"reservasi/internal/infrastructure"
 	"reservasi/internal/repository"
 	"reservasi/internal/usecase"
+	"reservasi/internal/worker"
 	"reservasi/pkg/middleware"
 
 	_ "reservasi/docs"
@@ -47,7 +47,7 @@ func main() {
 		log.Println("Warning: File configs/.env tidak ditemukan, menggunakan variabel environment sistem.")
 	}
 
-	// 2. Inisialisasi koneksi Database & Redis
+	// 2. Inisialisasi koneksi Database, Redis, dan Message Broker
 	infrastructure.ConnectPostgres()
 	infrastructure.ConnectRedis()
 
@@ -117,7 +117,10 @@ func main() {
 	bookingRepo := repository.NewBookingRepository(infrastructure.DB, infrastructure.RedisClient)
 	bookingUsecase := usecase.NewBookingUsecase(bookingRepo)
 
-	// 5. Inisialisasi Router Gin
+	// 5b. Start background worker untuk Outbox Pattern (Retry Queue)
+	worker.StartRetryWorker(bookingRepo)
+
+	// 6. Inisialisasi Router Gin
 	r := gin.Default()
 
 	// 6. Swagger UI & GraphQL Playground (didaftarkan publik)

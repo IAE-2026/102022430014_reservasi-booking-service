@@ -85,6 +85,14 @@ func (r *bookingRepository) GetGuestByID(id string) (*domain.Guest, error) {
 	return &guest, nil
 }
 
+func (r *bookingRepository) UpdateBookingStatus(bookingID string, status string) error {
+	return r.db.Model(&domain.Booking{}).Where("id = ?", bookingID).Update("status", status).Error
+}
+
+func (r *bookingRepository) UpdateRoomStatus(roomID string, status string) error {
+	return r.db.Model(&domain.Room{}).Where("id = ?", roomID).Update("status", status).Error
+}
+
 // Redis operations
 func (r *bookingRepository) HoldRoom(ctx context.Context, roomID string, guestID string, ttl time.Duration) error {
 	key := "hold:room:" + roomID
