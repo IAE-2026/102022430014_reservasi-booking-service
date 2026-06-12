@@ -32,7 +32,10 @@ func PublishBookingEvent(ctx context.Context, event BookingEvent) error {
 	}
 
 	// 2. Serialisasi Event ke format JSON
-	payloadBytes, err := json.Marshal(event)
+	wrappedPayload := map[string]interface{}{
+		"message": event,
+	}
+	payloadBytes, err := json.Marshal(wrappedPayload)
 	if err != nil {
 		return fmt.Errorf("gagal serialisasi event payload: %w", err)
 	}
