@@ -7,8 +7,18 @@ DROP TABLE IF EXISTS bookings CASCADE;
 DROP TABLE IF EXISTS addons CASCADE;
 DROP TABLE IF EXISTS rooms CASCADE;
 DROP TABLE IF EXISTS guests CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
--- 1. Tabel Guest (Guest Service)
+-- 1. Tabel Users (Authentication & Role Mapping)
+-- Digunakan oleh middleware auth untuk mapping email JWT ke role lokal
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'guest', -- guest, admin
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Tabel Guest (Guest Service)
 CREATE TABLE IF NOT EXISTS guests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -18,7 +28,7 @@ CREATE TABLE IF NOT EXISTS guests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Tabel Rooms (Catalog Service)
+-- 3. Tabel Rooms (Catalog Service)
 CREATE TABLE IF NOT EXISTS rooms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
@@ -30,7 +40,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Tabel Addons (Catalog Service)
+-- 4. Tabel Addons (Catalog Service)
 CREATE TABLE IF NOT EXISTS addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
@@ -38,7 +48,7 @@ CREATE TABLE IF NOT EXISTS addons (
     description TEXT
 );
 
--- 4. Tabel Bookings (Booking Service)
+-- 5. Tabel Bookings (Booking Service)
 -- Mengelola logika penguncian kamar (locking)
 CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -51,10 +61,11 @@ CREATE TABLE IF NOT EXISTS bookings (
     grand_total DECIMAL(12, 2) DEFAULT 0,
     status VARCHAR(50) DEFAULT 'LOCKED', -- LOCKED, PENDING_PAYMENT, CONFIRMED, CANCELLED
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP -- Batas waktu pembayaran sebelum kunci dilepas
+    expires_at TIMESTAMP, -- Batas waktu pembayaran sebelum kunci dilepas
+    receipt_number VARCHAR(100) -- Nomor resi dari audit SOAP
 );
 
--- 5. Tabel Relasi Booking Addons (Booking Service)
+-- 6. Tabel Relasi Booking Addons (Booking Service)
 CREATE TABLE IF NOT EXISTS booking_addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
