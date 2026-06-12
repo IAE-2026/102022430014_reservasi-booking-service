@@ -47,9 +47,22 @@ func (u *bookingUsecase) CreateBooking(req *domain.CreateBookingRequest) (*domai
 		return nil, errors.New("kamar tidak ditemukan")
 	}
 
-	// 3b. VERIFIKASI REDIS LOCK
-	// Pastikan guest ini yang memegang lock kamar tersebut
+	// 3b. VALIDASI IDEMPOTENCY KEY
+	// Mencegah duplikasi request (sesuai sequence.md langkah #8)
 	ctx := context.Background()
+	if req.IdempotencyKey != "" {
+		idempotencyRedisKey := "idempotency:" + req.IdempotencyKey
+		if infrastructure.RedisClient != nil {
+			ok, err := infrastructure.RedisClient.SetNX(ctx, idempotencyRedisKey, "1", 86400*time.Second).Result()
+			if err != nil {
+				log.Printf("Warning: Gagal cek idempotency di Redis: %v", err)
+			} else if !ok {
+				return nil, errors.New("request duplikat terdeteksi (Idempotency-Key sudah pernah digunakan)")
+			}
+		}
+	}
+
+	// 3c. VERIFIKASI REDIS LOCK
 	heldBy, err := u.bookingRepo.GetRoomHold(ctx, req.RoomID)
 	if err != nil {
 		return nil, errors.New("gagal mengecek status kamar")

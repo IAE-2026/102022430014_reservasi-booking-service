@@ -33,10 +33,11 @@ type BookingAddon struct {
 
 // Data Request
 type CreateBookingRequest struct {
-	GuestID      string `json:"guest_id" binding:"required,uuid"`
-	RoomID       string `json:"room_id" binding:"required,uuid"`
-	CheckInDate  string `json:"check_in_date" binding:"required"`  // format YYYY-MM-DD
-	CheckOutDate string `json:"check_out_date" binding:"required"` // format YYYY-MM-DD
+	GuestID        string `json:"guest_id" binding:"required,uuid"`
+	RoomID         string `json:"room_id" binding:"required,uuid"`
+	CheckInDate    string `json:"check_in_date" binding:"required"`  // format YYYY-MM-DD
+	CheckOutDate   string `json:"check_out_date" binding:"required"` // format YYYY-MM-DD
+	IdempotencyKey string `json:"-"`                                 // Diisi dari header, bukan JSON body
 }
 
 type CreateBookingAddonRequest struct {
