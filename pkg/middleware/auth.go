@@ -81,12 +81,27 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// Cek email di root claims
 		emailRaw, ok := claims["email"]
 		if !ok || emailRaw == nil {
+			// Jika tidak ada, cek di dalam object "profile" (format SSO Cloud Dosen)
+			if profileRaw, ok := claims["profile"]; ok && profileRaw != nil {
+				if profileMap, ok := profileRaw.(map[string]interface{}); ok {
+					emailRaw = profileMap["email"]
+				}
+			}
+		}
+
+		if emailRaw == nil {
 			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Token missing email claim")
 			return
 		}
-		email := emailRaw.(string)
+		
+		email, ok := emailRaw.(string)
+		if !ok || email == "" {
+			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Email claim is not a string or empty")
+			return
+		}
 
 		// 6. Validasi role lokal menggunakan database
 		var user UserContext
