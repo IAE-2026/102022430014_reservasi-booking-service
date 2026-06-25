@@ -163,7 +163,7 @@ info:
   title: Layanan Reservasi API
   version: "1.0"
 paths:
-  /bookings:
+  /api/v1/bookings:
     post:
       consumes:
       - application/json
@@ -213,7 +213,7 @@ paths:
       summary: Membuat pesanan awal (mengunci kamar)
       tags:
       - Bookings
-  /bookings/{id}/addons:
+  /api/v1/bookings/{id}/addons:
     post:
       consumes:
       - application/json
@@ -264,7 +264,7 @@ paths:
       summary: Menambahkan layanan tambahan ke pesanan
       tags:
       - Bookings
-  /bookings/{id}/summary:
+  /api/v1/bookings/{id}/summary:
     get:
       description: Mendapatkan ringkasan rincian biaya kamar dan layanan tambahan
       parameters:
@@ -306,7 +306,7 @@ paths:
       summary: Menampilkan nota total (Summary)
       tags:
       - Bookings
-  /rooms/{id}/hold:
+  /api/v1/rooms/{id}/hold:
     delete:
       consumes:
       - application/json

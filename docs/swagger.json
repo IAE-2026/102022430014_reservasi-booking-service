@@ -9,7 +9,7 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/bookings": {
+        "/api/v1/bookings": {
             "post": {
                 "description": "Endpoint untuk membuat reservasi awal dengan status LOCKED. Terintegrasi dengan SOAP Audit dan Message Broker.",
                 "consumes": [
@@ -87,7 +87,7 @@
                 }
             }
         },
-        "/bookings/{id}/addons": {
+        "/api/v1/bookings/{id}/addons": {
             "post": {
                 "description": "Endpoint untuk menambahkan addon (sarapan, asuransi, dll) ke dalam booking yang sudah ada",
                 "consumes": [
@@ -166,7 +166,7 @@
                 }
             }
         },
-        "/bookings/{id}/summary": {
+        "/api/v1/bookings/{id}/summary": {
             "get": {
                 "description": "Mendapatkan ringkasan rincian biaya kamar dan layanan tambahan",
                 "produces": [
@@ -233,7 +233,7 @@
                 }
             }
         },
-        "/rooms/{id}/hold": {
+        "/api/v1/rooms/{id}/hold": {
             "post": {
                 "description": "Endpoint tambahan untuk menahan kamar menggunakan Redis selama 10 menit agar tidak diambil orang lain saat mengisi form.",
                 "consumes": [

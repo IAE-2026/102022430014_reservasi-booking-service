@@ -146,16 +146,26 @@ func main() {
 		},
 	}))
 
-	// 8. Daftarkan middleware autentikasi untuk route terproteksi
-	protected := r.Group("/")
-	protected.Use(middleware.AuthMiddleware())
+	// Tambahkan handler 404 NoRoute untuk REST
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{
+			Status:  "error",
+			Message: "Endpoint tidak ditemukan",
+		})
+	})
 
-	protected.POST("/graphql/v1/summary", func(c *gin.Context) {
+	// GraphQL endpoint didaftarkan tanpa auth untuk memudahkan introspection di Playground
+	r.POST("/graphql/v1/summary", func(c *gin.Context) {
 		graphqlServer.ServeHTTP(c.Writer, c.Request)
 	})
 
+	// 8. Daftarkan middleware autentikasi untuk route terproteksi REST
+	apiV1 := r.Group("/api/v1")
+	apiV1.Use(middleware.AuthMiddleware())
+
 	// 9. Daftarkan Handler Booking Service (REST Handlers)
-	rest.NewBookingHandler(protected, bookingUsecase)
+	rest.NewBookingHandler(apiV1, bookingUsecase)
+
 
 	// 9. Jalankan Server
 	port := os.Getenv("APP_PORT")

@@ -42,7 +42,7 @@ func NewBookingHandler(r gin.IRouter, us domain.BookingUsecase) {
 // @Success 201 {object} domain.SuccessResponse{data=domain.Booking} "Created"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Router /bookings [post]
+// @Router /api/v1/bookings [post]
 func (h *BookingHandler) CreateBooking(c *gin.Context) {
 	var req domain.CreateBookingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -86,7 +86,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse{data=domain.BookingAddon} "Success"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Router /bookings/{id}/addons [post]
+// @Router /api/v1/bookings/{id}/addons [post]
 func (h *BookingHandler) AddAddon(c *gin.Context) {
 	bookingID := c.Param("id")
 
@@ -126,7 +126,7 @@ func (h *BookingHandler) AddAddon(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse{data=domain.BookingSummary} "Success"
 // @Failure 404 {object} domain.ErrorResponse "Not Found"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Router /bookings/{id}/summary [get]
+// @Router /api/v1/bookings/{id}/summary [get]
 func (h *BookingHandler) GetSummary(c *gin.Context) {
 	bookingID := c.Param("id")
 
@@ -159,7 +159,7 @@ func (h *BookingHandler) GetSummary(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Success"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Router /rooms/{id}/hold [post]
+// @Router /api/v1/rooms/{id}/hold [post]
 func (h *BookingHandler) HoldRoom(c *gin.Context) {
 	roomID := c.Param("id")
 
@@ -200,7 +200,7 @@ func (h *BookingHandler) HoldRoom(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Success"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Router /rooms/{id}/hold [delete]
+// @Router /api/v1/rooms/{id}/hold [delete]
 func (h *BookingHandler) ReleaseRoom(c *gin.Context) {
 	roomID := c.Param("id")
 
