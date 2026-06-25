@@ -164,6 +164,41 @@ info:
   version: "1.0"
 paths:
   /api/v1/bookings:
+    get:
+      description: Mendapatkan daftar seluruh reservasi (kebutuhan kontrak API)
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.Booking'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Mengambil semua pesanan (Collection)
+      tags:
+      - Bookings
     post:
       consumes:
       - application/json
@@ -211,6 +246,49 @@ paths:
           schema:
             $ref: '#/definitions/domain.ErrorResponse'
       summary: Membuat pesanan awal (mengunci kamar)
+      tags:
+      - Bookings
+  /api/v1/bookings/{id}:
+    get:
+      description: Mendapatkan rincian spesifik satu reservasi berdasarkan ID
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        type: string
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Booking'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Mengambil detail pesanan (Resource)
       tags:
       - Bookings
   /api/v1/bookings/{id}/addons:

@@ -45,6 +45,15 @@ func (r *bookingRepository) GetBookingByID(id string) (*domain.Booking, error) {
 	return &booking, nil
 }
 
+func (r *bookingRepository) GetAllBookings() ([]*domain.Booking, error) {
+	var bookings []*domain.Booking
+	err := r.db.Preload("Addons").Find(&bookings).Error
+	if err != nil {
+		return nil, err
+	}
+	return bookings, nil
+}
+
 func (r *bookingRepository) UpdateBooking(booking *domain.Booking) error {
 	return r.db.Save(booking).Error
 }
