@@ -61,3 +61,9 @@ Berdasarkan pengujian `curl` yang disimulasikan, layanan kita telah lulus uji un
 - ✅ Menerima akses valid dengan tipe Collection (status `200`) & Action (status `201`).
 - ✅ Menangani *Resource Not Found* dengan elegan dan sesuai kontrak wrapper (status `404`).
 - ✅ Menyediakan Swagger dan GraphQL Introspection secara lancar dari dalam *container* Docker.
+
+## Branch 	esting-dev-2
+1. Menghapus endpoint yang tidak diperlukan (HoldRoom, ReleaseRoom, AddAddon, GetSummary).
+2. Mengembalikan kewajiban Bearer Token SSO sesuai i-log.md.
+3. Memperbarui Swagger docs agar mencantumkan Authorization secara benar.
+4. Standar wrapper response status, message, data, meta tetap dipertahankan.

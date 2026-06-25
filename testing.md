@@ -406,14 +406,14 @@ Service memberikan response valid.
 
 Service dinyatakan lulus apabila:
 
-* [ ] Endpoint Collection berjalan.
-* [ ] Endpoint Resource berjalan.
-* [ ] Endpoint Action berjalan.
+* [x] Endpoint Collection berjalan.
+* [x] Endpoint Resource berjalan.
+* [x] Endpoint Action berjalan.
 * [ ] API Key `X-IAE-KEY` divalidasi.
-* [ ] Seluruh response menggunakan wrapper standar.
-* [ ] Swagger UI dapat diakses.
-* [ ] Swagger menampilkan seluruh endpoint.
-* [ ] GraphQL endpoint aktif.
-* [ ] GraphQL Playground aktif.
-* [ ] Minimal 1 Query GraphQL berfungsi.
-* [ ] Service berjalan pada Docker Container.
+* [x] Seluruh response menggunakan wrapper standar.
+* [x] Swagger UI dapat diakses.
+* [x] Swagger menampilkan seluruh endpoint.
+* [x] GraphQL endpoint aktif.
+* [x] GraphQL Playground aktif.
+* [x] Minimal 1 Query GraphQL berfungsi.
+* [x] Service berjalan pada Docker Container.

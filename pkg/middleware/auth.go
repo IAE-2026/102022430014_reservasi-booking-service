@@ -42,11 +42,10 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 2. Mengambil JWT dari header Authorization: Bearer <token> (OPSIONAL)
+		// 2. Mengambil JWT dari header Authorization: Bearer <token>
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			// JWT opsional jika sudah lolos X-IAE-KEY (sesuai kontrak IAE-T2)
-			c.Next()
+			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Missing or invalid Bearer token")
 			return
 		}
 
