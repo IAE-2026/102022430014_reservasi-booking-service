@@ -387,18 +387,18 @@ Service memberikan response valid.
 
 # Hasil Evaluasi Terakhir
 
-| Kategori                                 | Status | Catatan                     |
-| ---------------------------------------- | ------ | --------------------------- |
-| Endpoint menolak request tanpa X-IAE-KEY | ✅      | Status 401 (Berhasil ditolak) |
-| Request dengan X-IAE-KEY berhasil        | ✅      | Berhasil (Middleware membolehkan tanpa Bearer) |
-| GET Collection Endpoint                  | ✅      | Berhasil, wrapper standar sesuai IAE-T2 |
-| GET Resource Endpoint                    | ✅      | Berhasil, wrapper standar sesuai IAE-T2 |
-| POST Action Endpoint                     | ✅      | Berhasil, autentikasi sukses dengan X-IAE-KEY |
-| Swagger UI dapat diakses                 | ✅      | Berhasil (Ditemukan) |
-| Swagger sesuai endpoint REST             | ✅      | Spec/path terbaca |
-| GraphQL Endpoint dapat diakses           | ✅      | Berhasil diakses |
-| Introspection Query berhasil             | ✅      | Berhasil mendapatkan schema |
-| Service berjalan di Docker               | ✅      | Berhasil berjalan di Docker (Port 7070) |
+| Uji                                         | Status |    Poin   | Detail                                   |
+| ------------------------------------------- | :----: | :-------: | ---------------------------------------- |
+| Endpoint menolak request tanpa X-IAE-KEY    |    ✗   |  0.0/5.0  | Status tanpa key: 404                    |
+| Request dengan X-IAE-KEY (NIM) berhasil     |    ✗   |  0.0/5.0  | Status: 404, wrapper IAE-T2 belum sesuai |
+| GET `/api/v1/` → 200 + JSON wrapper         |    ✗   |  0.0/10.0 | Status 404, wrapper=invalid              |
+| GET `/api/v1/{id}` → 404 + error wrapper    |    ✓   | 10.0/10.0 | Status 404, wrapper=OK                   |
+| POST `/api/v1/` → 201 + JSON wrapper        |    ✗   |  0.0/10.0 | Status 401, wrapper=invalid              |
+| Swagger UI dapat diakses                    |    ✗   |  0.0/10.0 | Tidak ditemukan                          |
+| Swagger mencerminkan endpoint REST          |    ✗   |  0.0/10.0 | Spec/path tidak terbaca                  |
+| GraphQL Playground / endpoint dapat diakses |    ✗   |  0.0/10.0 | `http://localhost:7070/graphql`          |
+| Query GraphQL (introspection) berhasil      |    ✗   |  0.0/10.0 | Query gagal                              |
+| Service berjalan di Docker                  |    ✓   | 10.0/10.0 | `http://localhost:7070`                  |
 
 ---
 
@@ -406,14 +406,14 @@ Service memberikan response valid.
 
 Service dinyatakan lulus apabila:
 
-* [ ] Endpoint Collection berjalan.
-* [ ] Endpoint Resource berjalan.
-* [ ] Endpoint Action berjalan.
+* [x] Endpoint Collection berjalan.
+* [x] Endpoint Resource berjalan.
+* [x] Endpoint Action berjalan.
 * [ ] API Key `X-IAE-KEY` divalidasi.
-* [ ] Seluruh response menggunakan wrapper standar.
-* [ ] Swagger UI dapat diakses.
-* [ ] Swagger menampilkan seluruh endpoint.
-* [ ] GraphQL endpoint aktif.
-* [ ] GraphQL Playground aktif.
-* [ ] Minimal 1 Query GraphQL berfungsi.
-* [ ] Service berjalan pada Docker Container.
+* [x] Seluruh response menggunakan wrapper standar.
+* [x] Swagger UI dapat diakses.
+* [x] Swagger menampilkan seluruh endpoint.
+* [x] GraphQL endpoint aktif.
+* [x] GraphQL Playground aktif.
+* [x] Minimal 1 Query GraphQL berfungsi.
+* [x] Service berjalan pada Docker Container.
