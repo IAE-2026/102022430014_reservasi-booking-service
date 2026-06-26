@@ -59,6 +59,7 @@ type BookingSummary struct {
 // BookingRepository mengatur interaksi dengan database
 type BookingRepository interface {
 	CreateBooking(booking *Booking) error
+	GetAllBookings() ([]*Booking, error)
 	CreateBookingAddon(addon *BookingAddon) error
 	GetBookingByID(id string) (*Booking, error)
 	UpdateBooking(booking *Booking) error
@@ -79,7 +80,8 @@ type BookingUsecase interface {
 	CreateBooking(req *CreateBookingRequest) (*Booking, error)
 	AddAddon(bookingID string, req *CreateBookingAddonRequest) (*BookingAddon, error)
 	GetSummary(bookingID string) (*BookingSummary, error)
-
+	GetBookingByID(bookingID string) (*Booking, error)
+	GetAllBookings() ([]*Booking, error)
 	HoldRoom(roomID string, req *HoldRoomRequest) error
 	ReleaseRoom(roomID string, guestID string) error
 }

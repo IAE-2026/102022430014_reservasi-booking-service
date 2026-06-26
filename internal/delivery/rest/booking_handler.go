@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"os"
 	"reservasi/internal/domain"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,21 @@ import (
 
 type BookingHandler struct {
 	bookingUsecase domain.BookingUsecase
+}
+
+func serviceMeta() *domain.Meta {
+	serviceName := os.Getenv("IAE_SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "Reservasi-Service"
+	}
+	apiVersion := os.Getenv("IAE_API_VERSION")
+	if apiVersion == "" {
+		apiVersion = "v1"
+	}
+	return &domain.Meta{
+		ServiceName: serviceName,
+		ApiVersion:  apiVersion,
+	}
 }
 
 // NewBookingHandler mendaftarkan endpoint untuk Booking Service
@@ -24,6 +40,8 @@ func NewBookingHandler(r gin.IRouter, us domain.BookingUsecase) {
 	r.POST("/rooms/:id/hold", handler.HoldRoom)
 	r.DELETE("/rooms/:id/hold", handler.ReleaseRoom)
 
+	r.GET("/bookings", handler.GetAllBookings)
+	r.GET("/bookings/:id", handler.GetBooking)
 	r.POST("/bookings", handler.CreateBooking)
 	r.POST("/bookings/:id/addons", handler.AddAddon)
 	r.GET("/bookings/:id/summary", handler.GetSummary)
@@ -70,6 +88,7 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		Status:  "success",
 		Message: "Pesanan awal berhasil dibuat (Kamar dikunci)",
 		Data:    booking,
+		Meta:    serviceMeta(),
 	})
 }
 
@@ -112,6 +131,7 @@ func (h *BookingHandler) AddAddon(c *gin.Context) {
 		Status:  "success",
 		Message: "Layanan tambahan berhasil dimasukkan ke tagihan",
 		Data:    addon,
+		Meta:    serviceMeta(),
 	})
 }
 
@@ -143,6 +163,7 @@ func (h *BookingHandler) GetSummary(c *gin.Context) {
 		Status:  "success",
 		Message: "Nota total berhasil diambil",
 		Data:    summary,
+		Meta:    serviceMeta(),
 	})
 }
 
@@ -184,6 +205,7 @@ func (h *BookingHandler) HoldRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, domain.SuccessResponse{
 		Status:  "success",
 		Message: "Kamar berhasil ditahan sementara selama 10 menit. Silakan selesaikan form pemesanan.",
+		Meta:    serviceMeta(),
 	})
 }
 
@@ -225,5 +247,68 @@ func (h *BookingHandler) ReleaseRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, domain.SuccessResponse{
 		Status:  "success",
 		Message: "Tahanan kamar berhasil dilepas. Kamar tersedia kembali.",
+		Meta:    serviceMeta(),
+	})
+}
+
+// GetAllBookings godoc
+// @Summary Mengambil semua pesanan (Collection)
+// @Description Mendapatkan daftar seluruh reservasi (kebutuhan kontrak API)
+// @Tags Bookings
+// @Produce json
+// @Param X-IAE-KEY header string true "API Key"
+// @Param Authorization header string false "Bearer JWT Token dari SSO"
+// @Success 200 {object} domain.SuccessResponse{data=[]domain.Booking} "Success"
+// @Failure 401 {object} domain.ErrorResponse "Unauthorized"
+// @Security ApiKeyAuth
+// @Router /api/v1/bookings [get]
+func (h *BookingHandler) GetAllBookings(c *gin.Context) {
+	bookings, err := h.bookingUsecase.GetAllBookings()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, domain.SuccessResponse{
+		Status:  "success",
+		Message: "Data daftar reservasi berhasil diambil",
+		Data:    bookings,
+		Meta:    serviceMeta(),
+	})
+}
+
+// GetBooking godoc
+// @Summary Mengambil detail pesanan (Resource)
+// @Description Mendapatkan rincian spesifik satu reservasi berdasarkan ID
+// @Tags Bookings
+// @Produce json
+// @Param X-IAE-KEY header string true "API Key"
+// @Param Authorization header string false "Bearer JWT Token dari SSO"
+// @Param id path string true "Booking ID (UUID)"
+// @Success 200 {object} domain.SuccessResponse{data=domain.Booking} "Success"
+// @Failure 404 {object} domain.ErrorResponse "Not Found"
+// @Failure 401 {object} domain.ErrorResponse "Unauthorized"
+// @Security ApiKeyAuth
+// @Router /api/v1/bookings/{id} [get]
+func (h *BookingHandler) GetBooking(c *gin.Context) {
+	bookingID := c.Param("id")
+
+	booking, err := h.bookingUsecase.GetBookingByID(bookingID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, domain.SuccessResponse{
+		Status:  "success",
+		Message: "Data reservasi berhasil diambil",
+		Data:    booking,
+		Meta:    serviceMeta(),
 	})
 }
