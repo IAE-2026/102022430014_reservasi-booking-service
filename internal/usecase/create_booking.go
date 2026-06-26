@@ -62,15 +62,15 @@ func (u *bookingUsecase) CreateBooking(req *domain.CreateBookingRequest) (*domai
 		}
 	}
 
-	// 3c. VERIFIKASI REDIS LOCK
+	// 3c. VERIFIKASI REDIS LOCK (Opsional)
+	// Jika kamar tidak di-hold siapa pun, booking tetap diizinkan.
+	// Jika kamar di-hold oleh tamu lain, booking ditolak.
 	heldBy, err := u.bookingRepo.GetRoomHold(ctx, req.RoomID)
 	if err != nil {
-		return nil, errors.New("gagal mengecek status kamar")
+		log.Printf("Warning: Gagal mengecek hold di Redis: %v", err)
+		// Lanjutkan saja jika Redis error, jangan blokir transaksi
 	}
-	if heldBy == "" {
-		return nil, errors.New("sesi pemesanan anda telah habis, silakan mulai ulang")
-	}
-	if heldBy != req.GuestID {
+	if heldBy != "" && heldBy != req.GuestID {
 		return nil, errors.New("kamar ini sedang ditahan oleh pengguna lain")
 	}
 
